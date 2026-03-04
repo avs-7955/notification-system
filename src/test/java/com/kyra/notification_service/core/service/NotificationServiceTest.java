@@ -6,11 +6,13 @@ import com.kyra.notification_service.api.dto.Priority;
 import com.kyra.notification_service.core.correlation.CorrelationIdProvider;
 import com.kyra.notification_service.core.event.NotificationEvent;
 import com.kyra.notification_service.core.event.NotificationStatus;
+import com.kyra.notification_service.provider.NotificationProducer;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class NotificationServiceTest {
@@ -18,8 +20,9 @@ class NotificationServiceTest {
     @Test
     void createNotificationEvent_shouldPopulateGeneratedFieldsAndRequest() {
         CorrelationIdProvider correlationIdProvider = mock(CorrelationIdProvider.class);
+        NotificationProducer notificationProducer = mock(NotificationProducer.class);
         when(correlationIdProvider.getOrCreate()).thenReturn("corr-123");
-        NotificationService notificationService = new NotificationService(correlationIdProvider);
+        NotificationService notificationService = new NotificationService(correlationIdProvider, notificationProducer);
 
         NotificationRequest request = new NotificationRequest(
                 "user-123",
@@ -44,5 +47,6 @@ class NotificationServiceTest {
         assertEquals("template-1", event.templateId());
         assertEquals(NotificationStatus.PENDING, event.status());
         assertEquals(0, event.retryCount());
+        verify(notificationProducer).send(event);
     }
 }
